@@ -10,6 +10,7 @@ Aqui está um resumo das suas conquistas:
 - Criou instruções personalizadas direcionadas para tipos de arquivo e diretórios específicos
 - Construiu templates de prompt reutilizáveis para tarefas comuns como exercícios escolares
 - Configurou agentes personalizados para fluxos de trabalho especializados
+- Criou uma Agent Skill reutilizável com recursos carregados sob demanda
 
 ### O que vem a seguir?
 

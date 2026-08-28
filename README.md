@@ -1,12 +1,12 @@
 # Personalize Sua Experiência com o GitHub Copilot
 
-_Personalize o comportamento do GitHub Copilot com instruções personalizadas, prompts e agentes personalizados para seus fluxos de trabalho de desenvolvimento específicos._
+_Personalize o comportamento do GitHub Copilot com instruções personalizadas, prompts, agentes personalizados e Agent Skills para seus fluxos de trabalho de desenvolvimento específicos._
 
 ## Bem-vindo
 
 - **Para quem é**: Desenvolvedores e educadores que querem adaptar o comportamento do Copilot aos seus fluxos de trabalho específicos
-- **O que você vai aprender**: Como configurar instruções personalizadas, prompts e agentes personalizados para tornar o Copilot mais eficaz para seus casos de uso específicos
-- **O que você vai construir**: Uma configuração personalizada do Copilot com instruções, prompts e agentes personalizados que geram automaticamente trechos de código consistentes seguindo os padrões do seu projeto
+- **O que você vai aprender**: Como configurar instruções personalizadas, prompts, agentes personalizados e Agent Skills para tornar o Copilot mais eficaz para seus casos de uso específicos
+- **O que você vai construir**: Uma configuração personalizada do Copilot com instruções, prompts, agentes personalizados e uma Skill reutilizável que orientam o Copilot de acordo com os padrões e fluxos de trabalho do seu projeto
 - **Pré-requisitos**: Exercício [Getting Started with GitHub Copilot](https://github.com/skills/getting-started-with-github-copilot)
 - **Duração**: Este exercício leva menos de 30 minutos para ser concluído.
 
@@ -16,6 +16,7 @@ Neste exercício, você vai:
 1. Criar instruções personalizadas direcionadas para tipos de arquivo e diretórios específicos
 1. Construir templates de prompt reutilizáveis para tarefas comuns como exercícios escolares
 1. Configurar agentes personalizados para fluxos de trabalho especializados
+1. Criar uma Agent Skill com recursos carregados sob demanda para avaliar tarefas escolares
 
 ### Como iniciar este exercício
 

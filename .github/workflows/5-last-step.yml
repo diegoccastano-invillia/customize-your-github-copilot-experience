@@ -1,0 +1,231 @@
+name: Step 5 # Last step of the exercise
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/skills/assignment-rubric/**"
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+
+env:
+  REVIEW_FILE: ".github/steps/x-review.md"
+  SKILL_FILE: ".github/skills/assignment-rubric/SKILL.md"
+  RUBRIC_FILE: ".github/skills/assignment-rubric/rubric.md"
+
+jobs:
+  find_exercise:
+    name: Find Exercise Issue
+    uses: skills/exercise-toolkit/.github/workflows/find-exercise-issue.yml@v0.7.0
+
+  check_step_work:
+    name: Check step work
+    needs: [find_exercise]
+    runs-on: ubuntu-latest
+    env:
+      ISSUE_REPOSITORY: ${{ github.repository }}
+      ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get response templates
+        uses: actions/checkout@v4
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.7.0
+
+      - name: Find last comment
+        id: find-last-comment
+        uses: peter-evans/find-comment@v3
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          direction: last
+
+      - name: Update comment - checking work
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-id: ${{ steps.find-last-comment.outputs.comment-id }}
+          file: .github/translations/checking-work.md
+          edit-mode: replace
+
+      # START: Check practical exercise
+
+      - name: Check if SKILL.md exists
+        id: check-skill-exists
+        continue-on-error: true
+        uses: skills/exercise-toolkit/actions/file-exists@v0.7.0
+        with:
+          file: ${{ env.SKILL_FILE }}
+
+      - name: Check if rubric.md exists
+        id: check-rubric-exists
+        continue-on-error: true
+        uses: skills/exercise-toolkit/actions/file-exists@v0.7.0
+        with:
+          file: ${{ env.RUBRIC_FILE }}
+
+      - name: Check Skill frontmatter
+        id: check-frontmatter
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          FILE: ${{ env.SKILL_FILE }}
+        with:
+          script: |
+            const fs = require('fs');
+            const content = fs.readFileSync(process.env.FILE, 'utf8');
+            const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+
+            if (!match) {
+              core.setFailed('SKILL.md deve começar com frontmatter delimitado por ---.');
+              return;
+            }
+
+            const metadata = {};
+            for (const line of match[1].split(/\r?\n/)) {
+              const separator = line.indexOf(':');
+              if (separator === -1) continue;
+              const key = line.slice(0, separator).trim();
+              const value = line.slice(separator + 1).trim().replace(/^['"]|['"]$/g, '');
+              metadata[key] = value;
+            }
+
+            if (metadata.name !== 'assignment-rubric') {
+              core.setFailed('O campo name deve ser assignment-rubric, igual ao nome da pasta.');
+              return;
+            }
+
+            if (!metadata.description || metadata.description.length < 40) {
+              core.setFailed('O campo description deve explicar claramente o que a Skill faz e quando usá-la.');
+              return;
+            }
+
+      - name: Check rubric reference
+        id: check-rubric-reference
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          FILE: ${{ env.SKILL_FILE }}
+        with:
+          script: |
+            const fs = require('fs');
+            const content = fs.readFileSync(process.env.FILE, 'utf8');
+
+            if (!content.includes('(./rubric.md)')) {
+              core.setFailed('SKILL.md deve referenciar rubric.md com um link relativo: (./rubric.md).');
+            }
+
+      - name: Check rubric criteria and weights
+        id: check-rubric-content
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          FILE: ${{ env.RUBRIC_FILE }}
+        with:
+          script: |
+            const fs = require('fs');
+            const content = fs.readFileSync(process.env.FILE, 'utf8');
+            const requiredCriteria = [
+              'Objetivo de aprendizagem claro',
+              'Entregável esperado definido',
+              'Requisitos verificáveis',
+              'Dificuldade adequada ao público'
+            ];
+            const missingCriteria = requiredCriteria.filter((criterion) => !content.includes(criterion));
+
+            if (missingCriteria.length > 0) {
+              core.setFailed(`Critérios ausentes em rubric.md: ${missingCriteria.join(', ')}`);
+              return;
+            }
+
+            const weights = [...content.matchAll(/^\|[^|]+\|\s*(\d+)\s*\|\s*$/gm)]
+              .map((match) => Number(match[1]));
+            const total = weights.reduce((sum, weight) => sum + weight, 0);
+
+            if (weights.length !== 4 || total !== 100) {
+              core.setFailed(`A rubrica deve ter quatro pesos numéricos que totalizem 100. Total encontrado: ${total}.`);
+            }
+
+      - name: Update comment - step results
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-id: ${{ steps.find-last-comment.outputs.comment-id }}
+          edit-mode: replace
+          file: .github/translations/step-results-table.md
+          vars: |
+            step_number: 5
+            results_table:
+              - description: "Arquivo SKILL.md criado"
+                passed: ${{ steps.check-skill-exists.outcome == 'success' }}
+              - description: "Arquivo rubric.md criado"
+                passed: ${{ steps.check-rubric-exists.outcome == 'success' }}
+              - description: "Frontmatter da Skill configurado corretamente"
+                passed: ${{ steps.check-frontmatter.outcome == 'success' }}
+              - description: "Referência relativa para rubric.md encontrada"
+                passed: ${{ steps.check-rubric-reference.outcome == 'success' }}
+              - description: "Critérios e pesos da rubrica configurados corretamente"
+                passed: ${{ steps.check-rubric-content.outcome == 'success' }}
+
+      # END: Check practical exercise
+
+      - name: Fail job if not all checks passed
+        if: contains(steps.*.outcome, 'failure')
+        run: exit 1
+
+  post_review_content:
+    name: Post review content
+    needs: [find_exercise, check_step_work]
+    runs-on: ubuntu-latest
+    env:
+      ISSUE_REPOSITORY: ${{ github.repository }}
+      ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get response templates
+        uses: actions/checkout@v4
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.7.0
+
+      - name: Create comment - step finished - final review next
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: .github/translations/lesson-review.md
+
+      - name: Create comment - add review content
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: ${{ env.REVIEW_FILE }}
+
+      - name: Disable current workflow
+        run: gh workflow disable "${{github.workflow}}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  finish_exercise:
+    name: Finish Exercise
+    needs: [find_exercise, post_review_content]
+    uses: skills/exercise-toolkit/.github/workflows/finish-exercise.yml@v0.7.1
+    with:
+      issue-url: ${{ needs.find_exercise.outputs.issue-url }}
+      exercise-title: "Personalize Sua Experiência com o GitHub Copilot"

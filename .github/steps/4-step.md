@@ -89,7 +89,7 @@ Agora vamos criar um agente personalizado especializado em brainstorming de idei
 
 1. Faça o commit e envie (push) suas alterações para o arquivo do novo agente personalizado: `.github/agents/assignment-brainstorming.agent.md`
 
-1. Aguarde a Mona dar a revisão final!
+1. Aguarde a Mona verificar seu trabalho e publicar o próximo passo!
 
 <details>
 <summary>Está com problemas? 🤷</summary><br/>
