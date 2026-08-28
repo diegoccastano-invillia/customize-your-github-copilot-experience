@@ -83,6 +83,11 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            if (!fs.existsSync(process.env.FILE)) {
+              core.setFailed('SKILL.md ainda não foi criado.');
+              return;
+            }
+
             const content = fs.readFileSync(process.env.FILE, 'utf8');
             const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
 
@@ -119,6 +124,11 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            if (!fs.existsSync(process.env.FILE)) {
+              core.setFailed('SKILL.md ainda não foi criado.');
+              return;
+            }
+
             const content = fs.readFileSync(process.env.FILE, 'utf8');
 
             if (!content.includes('(./rubric.md)')) {
@@ -134,6 +144,11 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            if (!fs.existsSync(process.env.FILE)) {
+              core.setFailed('rubric.md ainda não foi criado.');
+              return;
+            }
+
             const content = fs.readFileSync(process.env.FILE, 'utf8');
             const requiredCriteria = [
               'Objetivo de aprendizagem claro',
